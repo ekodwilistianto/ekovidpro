@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EkoVid Pro - AI Video Upscaler untuk Microstocker</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            forest: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              200: '#bbf7d0',
+              300: '#86efac',
+              400: '#4ade80',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              800: '#166534',
+              900: '#14532d',
+              950: '#052e16'
+            },
+            dark: {
+              950: '#030806',
+              900: '#050d0a',
+              800: '#0a1612',
+              700: '#0f1f1a',
+              600: '#162822'
+            }
+          },
+          fontFamily: {
+            display: ['Space Grotesk', 'sans-serif'],
+            body: ['Inter', 'sans-serif']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #030806;
+      --bg-elevated: #0a1612;
+      --fg: #f0fdf4;
+      --muted: #9ca3af;
+      --accent: #22c55e;
+      --accent-dark: #15803d;
+      --card: #0f1f1a;
+      --border: #166534;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--fg);
+      overflow-x: hidden;
+    }
+
+    .font-display {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    #particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .gradient-mesh {
+      background: 
+        radial-gradient(ellipse 80% 50% at 20% 40%, rgba(34, 197, 94, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse 60% 40% at 80% 60%, rgba(21, 128, 61, 0.1) 0%, transparent 50%),
+        radial-gradient(ellipse 100% 80% at 50% 100%, rgba(5, 46, 22, 0.4) 0%, transparent 50%);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #22c55e 0%, #15803d 100%);
+      color: #ffffff !important;
+      text-decoration: none !important;
+      font-weight: 600;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(34, 197, 94, 0.3);
+      border: none;
+      cursor: pointer;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      color: #ffffff !important;
+      text-decoration: none !important;
+      font-weight: 600;
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .btn-primary:hover, .btn-secondary:hover {
+      transform: translateY(-2px);
+    }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .sticky-cta {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 0.75rem 1rem;
+      background: #0a1612;
+      border-top: 1px solid rgba(34, 197, 94, 0.2);
+      z-index: 100;
+      transform: translateY(100%);
+      transition: transform 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      backdrop-filter: blur(10px);
+    }
+
+    .sticky-cta.visible {
+      transform: translateY(0);
+    }
+
+    .countdown-box {
+      background: rgba(34, 197, 94, 0.05);
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 8px;
+      padding: 0.5rem;
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .countdown-number {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .feature-card {
+      background: linear-gradient(135deg, rgba(15, 31, 26, 0.8) 0%, rgba(10, 22, 18, 0.9) 100%);
+      border: 1px solid rgba(34, 197, 94, 0.1);
+      border-radius: 16px;
+      padding: 1.5rem;
+      transition: all 0.3s ease;
+    }
+
+    .price-strike {
+      position: relative;
+      color: var(--muted);
+      display: inline-block;
+    }
+
+    .price-strike::after {
+      content: '';
+      position: absolute;
+      left: -5%;
+      top: 50%;
+      width: 110%;
+      height: 2px;
+      background: #ef4444;
+      transform: rotate(-5deg);
+    }
+
+    .faq-item {
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+
+    .faq-header {
+      padding: 1rem 1.25rem;
+      background: rgba(15, 31, 26, 0.6);
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .faq-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: rgba(10, 22, 18, 0.5);
+    }
+
+    .faq-item.active .faq-content {
+      max-height: 1000px;
+    }
+
+    .app-badge {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      z-index: 20;
+    }
+
+    .glow-text {
+      text-shadow: 0 0 30px rgba(34, 197, 94, 0.5);
+    }
+    
+    /* Pricing Card Specific Structure */
+    .pricing-card-container {
+      background: #0f1f1a;
+      border-radius: 24px;
+      overflow: hidden;
+      border: 1px solid rgba(34, 197, 94, 0.2);
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    }
+    
+    .promo-header {
+      background: var(--accent);
+      color: #000;
+      padding: 0.5rem;
+      font-weight: 800;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: center;
+    }
+  </style>
+</head>
+<body class="antialiased">
+  <canvas id="particle-canvas"></canvas>
+
+  <div class="w-full relative z-10 gradient-mesh">
+    
+    <!-- HERO SECTION -->
+    <section class="w-full py-10 px-4 min-h-screen flex flex-col justify-center">
+      <div class="max-w-4xl mx-auto text-center">
+        <div class="reveal inline-flex items-center gap-2 px-4 py-2 rounded-full bg-forest-900/50 border border-forest-700/50 mb-6">
+          <span class="w-2 h-2 bg-forest-400 rounded-full animate-pulse"></span>
+          <span class="text-forest-400 text-sm font-medium">Solusi Lokal, Proses Offline</span>
+        </div>
+
+        <h1 class="reveal reveal-delay-1 font-display text-4xl md:text-5xl lg:text-7xl font-bold leading-tight mb-6">
+          Video Anda<br>
+          <span class="text-forest-400 glow-text">Ditolak Stock Agency</span><br>
+          Karena "Low Quality"?
+        </h1>
+
+        <p class="reveal reveal-delay-2 text-lg md:text-xl text-gray-400 mb-8 max-w-2xl mx-auto leading-relaxed">
+          Upscale Video Anda ke 4K dengan AI. Tanpa langganan bulanan. Tanpa upload ke cloud. Proses langsung di komputer Anda.
+        </p>
+
+        <div class="reveal reveal-delay-3 flex flex-col sm:flex-row items-center justify-center gap-4">
+          <a href="#pricing" class="btn-primary text-lg px-8 py-4 w-full sm:w-auto">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            Cobain Sekarang
+          </a>
+          <a href="https://www.youtube.com/watch?v=esiAwozlQSM" target="_blank" class="btn-secondary text-lg px-8 py-4 w-full sm:w-auto">
+            <svg class="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"/>
+            </svg>
+            Video Penjelasan Tools
+          </a>
+        </div>
+        <p class="reveal reveal-delay-3 text-sm text-gray-500 mt-4">Akses instan setelah pembayaran</p>
+
+        <div class="reveal reveal-delay-4 mt-12 relative max-w-3xl mx-auto group">
+          <div class="absolute -top-4 -right-2 md:right-4 app-badge shadow-xl">
+            <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M0 3.449L9.75 2.1V11.4H0V3.449zm0 17.102L9.75 21.9V12.6H0v7.951zM11.25 1.899L24 0V11.4H11.25V1.899zm0 20.202L24 24V12.6H11.25v9.501z"/>
+            </svg>
+            Windows Desktop App
+          </div>
+          <div class="relative rounded-2xl overflow-hidden border border-forest-800/50 shadow-2xl">
+            <img src="https://raw.githubusercontent.com/ekodwilistianto/testimonimember/main/COVER%20EKOVID%20PRO.png" alt="EkoVid Pro Cover" class="w-full h-auto">
+            <div class="absolute inset-0 bg-gradient-to-t from-dark-950/20 via-transparent to-transparent"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROBLEM SECTION -->
+    <section class="w-full py-16 px-4 bg-dark-900/50">
+      <div class="max-w-2xl mx-auto text-center mb-12">
+        <h2 class="reveal font-display text-3xl md:text-4xl font-bold mb-4">
+          Kenapa Video Microstock Anda<br>
+          <span class="text-red-400">Selalu Ditolak?</span>
+        </h2>
+        <div class="space-y-4 text-left">
+          <div class="reveal feature-card flex items-start gap-4">
+            <div class="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 text-red-400">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-white mb-1">Ditolak "Noise" atau "Artifact"</h3>
+              <p class="text-gray-400 text-sm">Sudah capek shoot dan edit, tapi kurator reject tanpa pandang bulu karena teknis resolusi.</p>
+            </div>
+          </div>
+          <div class="reveal reveal-delay-1 feature-card flex items-start gap-4">
+            <div class="w-12 h-12 rounded-lg bg-red-500/10 flex items-center justify-center flex-shrink-0 text-red-400">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+            <div>
+              <h3 class="font-semibold text-white mb-1">Kamera Mentok 1080p</h3>
+              <p class="text-gray-400 text-sm">Ingin jual 4K yang harganya jauh lebih mahal tapi modal kamera belum mendukung.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RINGKASAN FITUR -->
+    <section class="w-full py-16 px-4">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12">
+          <div class="reveal inline-block px-4 py-1 rounded-full bg-forest-500/10 border border-forest-500/30 mb-4">
+            <span class="text-forest-400 text-sm font-medium tracking-wide uppercase">Memperkenalkan EkoVid Pro</span>
+          </div>
+          <h2 class="reveal font-display text-3xl md:text-4xl font-bold">Ringkasan Fitur <span class="text-forest-400">EkoVid Pro</span></h2>
+          <p class="reveal text-gray-400 mt-4 max-w-2xl mx-auto leading-relaxed text-sm md:text-base">
+            EkoVid Pro hadir sebagai solusi pamungkas bagi para microstocker yang ingin meningkatkan nilai jual aset videonya tanpa biaya bulanan yang membengkak.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div class="reveal feature-card border-l-4 border-forest-500">
+            <h3 class="text-white font-semibold">Fitur Batch</h3>
+            <p class="text-gray-400 text-xs">Sekali Banyak Proses Video sekaligus secara otomatis.</p>
+          </div>
+          <div class="reveal feature-card border-l-4 border-forest-500">
+            <h3 class="text-white font-semibold">Simpan Dalam 1 Folder</h3>
+            <p class="text-gray-400 text-xs">Hasil render tertata rapi dalam satu direktori tujuan.</p>
+          </div>
+          <div class="reveal feature-card border-l-4 border-forest-500">
+            <h3 class="text-white font-semibold">Pilih Resolusi</h3>
+            <p class="text-gray-400 text-xs">Atur target resolusi output dari Full HD hingga 4K Ultra HD.</p>
+          </div>
+          <div class="reveal feature-card border-l-4 border-forest-500">
+            <h3 class="text-white font-semibold">Pilih FPS</h3>
+            <p class="text-gray-400 text-xs">Sesuaikan frame rate video agar sesuai dengan standar agensi.</p>
+          </div>
+          <div class="reveal feature-card border-l-4 border-forest-500">
+            <h3 class="text-white font-semibold">Pilih Format File</h3>
+            <p class="text-gray-400 text-xs">Output dalam berbagai format file yang kompatibel dengan agensi.</p>
+          </div>
+          <div class="reveal feature-card border-l-4 border-forest-500">
+            <h3 class="text-white font-semibold">Hapus Audio</h3>
+            <p class="text-gray-400 text-xs">Fitur Microstocker Banget untuk hilangkan suara secara otomatis.</p>
+          </div>
+          <div class="reveal feature-card border-l-4 border-forest-500">
+            <h3 class="text-white font-semibold">Safe Mode</h3>
+            <p class="text-gray-400 text-xs">Mencegah crash untuk komputer spek rendah.</p>
+          </div>
+          <div class="reveal feature-card border-l-4 border-forest-500">
+            <h3 class="text-white font-semibold">Ultra & Standard</h3>
+            <p class="text-gray-400 text-xs">Pilih mode kualitas upscale sesuai kebutuhan ketajaman detail.</p>
+          </div>
+          <div class="reveal feature-card border-l-4 border-forest-500">
+            <h3 class="text-white font-semibold">Auto Denoiser</h3>
+            <p class="text-gray-400 text-xs">Secara otomatis membersihkan grain/noise pada video mentah.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SPESIFIKASI KOMPUTER -->
+    <section class="w-full py-16 px-4 bg-dark-800/50">
+      <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-10">
+          <h2 class="reveal font-display text-3xl md:text-4xl font-bold mb-4">Spesifikasi Komputer Untuk <span class="text-forest-400">EkoVid Pro</span></h2>
+          <p class="reveal text-gray-400 max-w-2xl mx-auto text-sm">Software ini membutuhkan performa Kartu Grafis (VGA) yang kuat.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+          <!-- Tidak Kompatibel -->
+          <div class="reveal feature-card border-t-4 border-red-500 bg-red-500/5">
+            <h3 class="text-red-400 font-bold mb-4 flex items-center gap-2 text-sm">TIDAK KOMPATIBEL</h3>
+            <ul class="text-xs space-y-3 text-gray-400">
+              <li><strong class="text-white">VGA Onboard:</strong> Intel HD, UHD, Iris Xe, AMD Vega 8/10.</li>
+              <li><strong class="text-white">NVIDIA Seri Lama:</strong> GT 710, 730, 610, GTX 650, 750.</li>
+              <li><strong class="text-white">VRAM &lt; 4GB:</strong> Proses akan sering gagal.</li>
+            </ul>
+          </div>
+
+          <!-- Minimum -->
+          <div class="reveal feature-card border-t-4 border-forest-500 bg-forest-500/5">
+            <h3 class="text-forest-400 font-bold mb-4 flex items-center gap-2 text-sm">MINIMUM REQUIREMENTS</h3>
+            <ul class="text-xs space-y-2 text-gray-400">
+              <li><strong class="text-white">VGA:</strong> NVIDIA GTX 1050 Ti atau GTX 1650</li>
+              <li><strong class="text-white">VRAM:</strong> Min. 4 GB Dedicated</li>
+              <li><strong class="text-white">RAM:</strong> 8 GB</li>
+              <li><strong class="text-white">OS:</strong> Windows 10/11 (64-bit)</li>
+            </ul>
+          </div>
+
+          <!-- Recommended -->
+          <div class="reveal feature-card border-t-4 border-yellow-500 bg-yellow-500/5">
+            <h3 class="text-yellow-500 font-bold mb-4 flex items-center gap-2 text-sm">RECOMMENDED SPECS</h3>
+            <ul class="text-xs space-y-2 text-gray-400">
+              <li><strong class="text-white">VGA:</strong> RTX 2060, 3050, 3060, RTX 40 Series</li>
+              <li><strong class="text-white">VRAM:</strong> Min. 6 GB (Disarankan 8 GB+)</li>
+              <li><strong class="text-white">RAM:</strong> 16 GB</li>
+              <li><strong class="text-white">Storage:</strong> SSD (Free space 20-50 GB)</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="reveal p-6 rounded-2xl bg-forest-900/20 border border-forest-500/30">
+          <h3 class="text-white font-bold mb-2 uppercase text-sm">⚠️ CATATAN PENTING:</h3>
+          <p class="text-gray-400 text-xs md:text-sm leading-relaxed">Software ini mewajibkan penggunaan <strong class="text-forest-400">VGA Card NVIDIA (Dedicated)</strong>. Penggunaan pada VGA Intel/AMD Integrated tidak menjamin software berjalan normal.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="w-full py-16 px-4">
+      <div class="max-w-2xl mx-auto">
+        <h2 class="reveal text-center font-display text-3xl md:text-4xl font-bold mb-10">FAQ</h2>
+        <div class="reveal space-y-3" id="faq-container">
+          <div class="faq-item">
+            <div class="faq-header">
+              <span class="font-medium text-white text-sm">Beneran approved di Situs Microstock?</span>
+              <svg class="faq-icon w-5 h-5 text-forest-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+            <div class="faq-content">
+              <div class="p-4 text-sm text-gray-400">
+                <p class="mb-4">Untuk hasil before after bisa cek: <a href="https://drive.google.com/drive/folders/1vwxTWR6tTa7lyh19HoDw9TonIwvGe5Qr?usp=sharing" target="_blank" class="text-forest-400 underline font-semibold">Google Drive Hasil Upscale</a></p>
+                <img src="https://raw.githubusercontent.com/ekodwilistianto/testimonimember/main/aprrove%20microstock%20video.jpg" alt="Bukti Approved" class="w-full rounded-lg border border-forest-800/30">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING SECTION (Followed penawaran terbatas.jpg structure) -->
+    <section id="pricing" class="w-full py-16 px-4">
+      <div class="max-w-3xl mx-auto">
+        <div class="text-center mb-8">
+            <p class="reveal text-forest-400 font-bold tracking-widest text-xs uppercase mb-2">Penawaran Terbatas</p>
+            <h2 class="reveal font-display text-2xl md:text-4xl font-bold text-white mb-10">INVESTASI UNTUK MASA DEPAN MICROSTOCKMU</h2>
+            
+            <!-- Promo Countdown Box -->
+            <div class="reveal inline-block w-full max-w-md p-6 border border-forest-800/50 rounded-2xl bg-dark-900/50 mb-10">
+                <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-4">Harga Promo Berakhir Dalam:</p>
+                <div class="flex justify-center items-center gap-4" id="countdown">
+                    <div class="text-center">
+                        <div class="countdown-box"><div class="countdown-number" id="hours">23</div></div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1">Jam</div>
+                    </div>
+                    <div class="text-forest-400 font-bold">:</div>
+                    <div class="text-center">
+                        <div class="countdown-box"><div class="countdown-number" id="minutes">59</div></div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1">Menit</div>
+                    </div>
+                    <div class="text-forest-400 font-bold">:</div>
+                    <div class="text-center">
+                        <div class="countdown-box"><div class="countdown-number" id="seconds">42</div></div>
+                        <div class="text-[10px] text-gray-500 uppercase mt-1">Detik</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Pricing Card -->
+        <div class="reveal pricing-card-container">
+            <div class="promo-header">Promo Terbatas</div>
+            <div class="p-8 md:p-12 text-center">
+                <p class="text-gray-500 text-sm font-medium mb-1">HARGA NORMAL</p>
+                <p class="price-strike text-xl font-bold text-gray-600 mb-6">Rp 655.000</p>
+                
+                <p class="text-forest-400 text-xs font-bold tracking-widest uppercase mb-2">Harga Hari Ini</p>
+                <div class="text-5xl md:text-7xl font-bold text-white mb-2">Rp 355.000</div>
+                <p class="text-forest-400 text-sm italic font-medium mb-8">Hemat Rp 300.000 (45%)</p>
+                
+                <a href="https://ekodwilistianto.com/ekodwi.id/qel2dlo67k03/checkout?token=cGFyYW1zPSU1QiU1RCZiaWRfcHJpY2U9MCZxdHlfcHJvZD0x" target="_blank" class="btn-primary w-full py-5 text-xl uppercase tracking-widest shadow-forest-500/20">
+                  Beli Sekarang
+                </a>
+                
+                <div class="flex flex-wrap justify-center gap-6 mt-8">
+                    <div class="flex items-center gap-2 text-gray-400 text-xs font-medium">
+                        <svg class="w-4 h-4 text-forest-400" fill="currentColor" viewBox="0 0 20 20"><path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"/></svg>
+                        PEMBAYARAN AMAN
+                    </div>
+                    <div class="flex items-center gap-2 text-gray-400 text-xs font-medium">
+                        <svg class="w-4 h-4 text-forest-400" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1a1 1 0 112 0v1a1 1 0 11-2 0zM13.536 14.95l.707.707a1 1 0 101.414-1.414l-.707-.707a1 1 0 10-1.414 1.414zM6.464 14.95l-.707.707a1 1 0 10-1.414-1.414l.707-.707a1 1 0 101.414 1.414zM10 14a4 4 0 100-8 4 4 0 000 8z"/></svg>
+                        AKSES INSTAN
+                    </div>
+                </div>
+                
+                <div class="mt-8 pt-8 border-t border-forest-800/30">
+                    <p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest mb-4 text-center">Metode Pembayaran:</p>
+                    <div class="flex justify-center flex-wrap gap-2 text-[10px] font-bold text-gray-400">
+                        <span class="px-3 py-1 bg-dark-800 rounded border border-forest-800/50">QRIS</span>
+                        <span class="px-3 py-1 bg-dark-800 rounded border border-forest-800/50">TRANSFER BANK</span>
+                        <span class="px-3 py-1 bg-dark-800 rounded border border-forest-800/50">E-WALLET</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <p class="reveal text-center text-gray-600 text-[10px] mt-8 uppercase tracking-widest font-medium">
+            TRANSAKSI DIPROSES MELALUI LYNK.ID YANG TERPERCAYA DAN AMAN.
+        </p>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="w-full py-12 px-4 text-center border-t border-forest-900/30">
+      <p class="text-gray-600 text-sm">&copy; 2025 EkoVid Pro. All rights reserved.</p>
+      <p class="text-gray-700 text-xs mt-2">Windows 10/11 (64-bit) Only</p>
+    </footer>
+
+  </div>
+
+  <!-- STICKY CTA MOBILE/DESKTOP (Followed stick button.jpg structure) -->
+  <div class="sticky-cta" id="sticky-cta">
+    <div class="flex flex-col">
+        <span class="price-strike text-[10px] font-bold text-gray-500">Rp 655.000</span>
+        <span class="text-lg font-bold text-white">Rp 355.000</span>
+    </div>
+    <a href="https://ekodwilistianto.com/ekodwi.id/qel2dlo67k03/checkout?token=cGFyYW1zPSU1QiU1RCZiaWRfcHJpY2U9MCZxdHlfcHJvZD0x" target="_blank" class="bg-forest-500 hover:bg-forest-400 text-black px-6 py-2 rounded-lg font-bold text-sm transition-all shadow-lg shadow-forest-500/20">
+      Beli Sekarang
+    </a>
+  </div>
+
+  <script>
+    let canvas, ctx, particles = [], animationId;
+
+    function initParticles() {
+      canvas = document.getElementById('particle-canvas');
+      ctx = canvas.getContext('2d');
+      resizeCanvas();
+      createParticles();
+      animateParticles();
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function createParticles() {
+      particles = [];
+      const count = Math.min(Math.floor((canvas.width * canvas.height) / 15000), 80);
+      for (let i = 0; i < count; i++) {
+        particles.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * canvas.height,
+          radius: Math.random() * 2 + 0.5,
+          vx: (Math.random() - 0.5) * 0.4,
+          vy: (Math.random() - 0.5) * 0.4,
+          opacity: Math.random() * 0.5 + 0.1
+        });
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width; if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height; if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(34, 197, 94, ${p.opacity})`;
+        ctx.fill();
+      });
+      animationId = requestAnimationFrame(animateParticles);
+    }
+
+    function initScrollReveal() {
+      const reveals = document.querySelectorAll('.reveal');
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('active'); });
+      }, { threshold: 0.1 });
+      reveals.forEach(el => observer.observe(el));
+    }
+
+    // Reset Countdown on Load
+    function initCountdown() {
+      const h = document.getElementById('hours'), m = document.getElementById('minutes'), s = document.getElementById('seconds');
+      const startTime = Date.now();
+      const duration = (23 * 3600000) + (59 * 60000) + (42 * 1000);
+
+      setInterval(() => {
+        let diff = duration - (Date.now() - startTime);
+        if (diff < 0) diff = 0;
+        h.innerText = Math.floor(diff / 3600000).toString().padStart(2, '0');
+        m.innerText = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+        s.innerText = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+      }, 1000);
+    }
+
+    function initFAQ() {
+      document.querySelectorAll('.faq-header').forEach(header => {
+        header.addEventListener('click', () => {
+          const item = header.parentElement;
+          const isActive = item.classList.contains('active');
+          document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+          if (!isActive) item.classList.add('active');
+        });
+      });
+    }
+
+    window.addEventListener('scroll', () => {
+      const cta = document.getElementById('sticky-cta');
+      if (window.scrollY > 600) cta.classList.add('visible');
+      else cta.classList.remove('visible');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initParticles(); initScrollReveal(); initCountdown(); initFAQ();
+    });
+    window.addEventListener('resize', () => { resizeCanvas(); createParticles(); });
+  </script>
+</body>
+</html>
