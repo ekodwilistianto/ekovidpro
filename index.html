@@ -468,11 +468,50 @@
               </div>
             </div>
           </div>
+
+          <div class="faq-item">
+            <div class="faq-header">
+              <span class="font-medium text-white text-sm">Berapa lama estimasi waktu prosesnya?</span>
+              <svg class="faq-icon w-5 h-5 text-forest-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </div>
+            <div class="faq-content">
+              <div class="p-4 text-sm text-gray-400 space-y-5">
+                <p class="font-semibold text-white">Untuk Studi Kasus Video 5 Second :</p>
+                
+                <div>
+                  <p class="text-red-400 font-semibold mb-1">🔴 Tidak Kompatibel (VGA Onboard, VRAM &lt; 4GB)</p>
+                  <p><span class="text-white">Estimasi Waktu:</span> 1 hingga 2 Jam+ (Atau Gagal/Crash)</p>
+                  <p class="mt-1"><span class="text-white">Kondisi:</span> Karena VRAM tidak cukup, akan sering kehabisan memori (Out of Memory). Kalaupun berhasil jalan dengan memori yang dibagi (Shared RAM) atau dipaksa menggunakan CPU, proses 1 frame bisa memakan waktu 20 hingga 40 detik. Ini sangat berisiko memunculkan pesan error di tengah jalan sebelum masuk tahap penggabungan.</p>
+                </div>
+                
+                <div>
+                  <p class="text-forest-400 font-semibold mb-1">🟢 Minimum Requirements (GTX 1050 Ti / 1650 | VRAM 4GB)</p>
+                  <p><span class="text-white">Estimasi Waktu:</span> 7 hingga 15 Menit</p>
+                  <p class="mt-1"><span class="text-white">Kondisi:</span> Di spesifikasi ini, pengguna wajib menggunakan "SAFE MODE" agar VRAM tidak jebol. Kecepatan render biasanya berkisar antara 2 hingga 5 detik per frame, tergantung resolusi video aslinya.</p>
+                </div>
+                
+                <div>
+                  <p class="text-yellow-500 font-semibold mb-1">🟡 Recommended Specs (RTX 2060, 3060, 40 Series | VRAM 6GB+)</p>
+                  <p><span class="text-white">Estimasi Waktu:</span> 1.5 hingga 3 Menit</p>
+                  <p class="mt-1"><span class="text-white">Kondisi:</span> Arsitektur RTX dan VRAM yang besar memungkinkan pengguna memakai "TURBO MODE". Pemrosesan AI berjalan sangat optimal, biasanya hanya butuh waktu 0.5 hingga 1.5 detik per frame.</p>
+                </div>
+                
+                <div class="pt-4 border-t border-forest-800/30">
+                  <p class="text-white font-semibold mb-2">Catatan Penting Tambahan:</p>
+                  <p class="mb-2">Estimasi di atas bisa bergeser sedikit tergantung dari dua pengaturan yang ada di aplikasi:</p>
+                  <ul class="list-disc pl-5 space-y-2">
+                    <li><strong class="text-white">Resolusi Sumber:</strong> Meng-upscale video awal yang beresolusi 720p akan jauh lebih cepat daripada meng-upscale video awal yang sudah 1080p.</li>
+                    <li><strong class="text-white">Engine AI:</strong> Pilihan STANDARD (Cepat) akan lebih ringan dan cepat dibandingkan ULTRA SHARP.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- PRICING SECTION (Followed penawaran terbatas.jpg structure) -->
+    <!-- PRICING SECTION -->
     <section id="pricing" class="w-full py-16 px-4">
       <div class="max-w-3xl mx-auto">
         <div class="text-center mb-8">
@@ -552,7 +591,7 @@
 
   </div>
 
-  <!-- STICKY CTA MOBILE/DESKTOP (Followed stick button.jpg structure) -->
+  <!-- STICKY CTA MOBILE/DESKTOP -->
   <div class="sticky-cta" id="sticky-cta">
     <div class="flex flex-col">
         <span class="price-strike text-[10px] font-bold text-gray-500">Rp 655.000</span>
